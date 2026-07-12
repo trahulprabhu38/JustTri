@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: ./backend
+    container_name: tri-backend
+    environment:
+      GARMIN_DATA_DIR: /data
+      UPLOAD_DIR: /app/uploads
+      PORT: "8080"
+      # Optional: set in a .env file next to this compose file.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      # Google SSO: create an OAuth Web client in Google Cloud Console.
+      # Add JS origin http://localhost:5173. Paste the client ID here (public value).
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-1083733553694-lcm9ggcosfokmq64kr7l3bh28rp3hgdl.apps.googleusercontent.com}
+      # Optional: fixed session-signing secret (auto-generated & persisted if empty).
+      SESSION_SECRET: ${SESSION_SECRET:-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}
+      # Strava keys are now per-user (entered during onboarding), no longer set here.
+      STRAVA_REDIRECT_URI: ${STRAVA_REDIRECT_URI:-http://localhost:8080/api/strava/callback}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    volumes:
+      - ./json:/data:ro          # your Garmin export (read-only)
+      - tri-uploads:/app/uploads  # uploaded races persist here
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: tri-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  tri-uploads:
